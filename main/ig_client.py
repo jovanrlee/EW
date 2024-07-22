@@ -84,7 +84,6 @@ class IGClient:
         return users_dict
 
 
-    # Direct Messages -- TODO test if sends only one or multiple
     def send_message_to_user(self, text: str, thread_id: str) -> DirectMessage:
         logger.info("Sending text" + text)
         direct_message: DirectMessage = self.client.direct_send(text, thread_ids=[thread_id])
@@ -120,7 +119,6 @@ class IGClient:
             media_id = None # Normal video path
             pass
 
-
         if media_type == "meme":
             media_id = None
 
@@ -138,7 +136,6 @@ class IGClient:
             story = None # Normal video path
             pass
 
-
         if story_type == "meme":
             story = None
 
@@ -146,7 +143,7 @@ class IGClient:
 
     
 
-    def send_photo_to_user(self, text: str, user_id: str, photo_type: str = None):
+    def send_photo_to_user(self, path: str, user_id: str, photo_type: str = None):
         if photo_type == "sexy":
             path = None
         if photo_type == "funny":
@@ -169,24 +166,24 @@ class IGClient:
 
  
     # STORIES
-    def publish_image_tostory(self, note_text: str):
+    def publish_image_tostory(self, path: str):
         # JPG Only
-        note: Story = self.client.photo_upload_to_story(note_text, 0)
+        note: Story = self.client.photo_upload_to_story(path, 0)
         return note
 
-    def publish_video_to_story(self, note_text: str):
+    def publish_video_to_story(self, path: str):
         # MP4 Only
-        note: Story = self.client.video_upload_to_story(note_text, 0)
+        note: Story = self.client.video_upload_to_story(path, 0)
         return note
     
 
 
+#Following
 
+    def follow_user(self, user_id: str):
+        user_id = self.client.user_follow(self.user_id)
 
-    
-          # def show_feed(self):
-    #     return self.client.timeline_feed()
-
+        pass
     # def show_media(self):
     #     user_id = self.client.user_id_from_username(self.username)
     #     return self.client.user_medias(user_id, 20)
