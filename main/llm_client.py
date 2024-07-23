@@ -4,7 +4,7 @@ class LLMClient:
 
     def __init__(self, 
                  api_key: str, 
-                 model: str = "jondurbin/airoboros-l2-70b", 
+                 model: str = "meta-llama/llama-3-70b-instruct", 
                  base_url: str = "https://api.novita.ai/v3/openai",
                  max_tokens: int = 512,
                  stream: bool = False):
@@ -41,8 +41,6 @@ class LLMClient:
             # Get rid of the upside down exclamation mark (¡)
             response = response.replace('¡', '')
 
-
-            logging.info(response)
 
         return response
     

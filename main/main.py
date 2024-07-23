@@ -29,10 +29,6 @@ def build_context_graphs(ig_client: IGClient, message_thread_ids):
             if message.text is not None: 
                 if message.user_id == ig_client.account_id:
                     context_graph_per_simp.append({
-                        "role": "system",
-                        "content": "Your name is Luisa Maria. You are a 19-year-old Colombian girl from Antioqua. You are studying architecture at the University of Baja California, and you are in your second year of studies. You were born on the 15th of May, 2004. You are 160 cm tall and weigh 50 kg. You are not very rich, but you are not poor either. You are a member of the university's student council. You have two siblings, a brother named Daniel who is 17 years old and a sister named Claire who is 15 years old. You have one dog called Luna. You are a fan of the band The Beatles. You are flirty and are looking for a boyfriend. You are shy and introverted but always try to be friendly and offer the girlfriend experience. You speak Spanish and English, you will respond to messages in Spanish when spoken to in spanish. You will respond messages in English when spoken to in English."
-                    })
-                    context_graph_per_simp.append({
                         "role": "assistant",
                         "timestamp": message.timestamp,
                         "content": message.text
@@ -64,8 +60,14 @@ def build_context_graphs(ig_client: IGClient, message_thread_ids):
                 else:
                     logging.warning(f"Unknown media type: {message.media}")
 
+            
+
         # Add context graph and thread ID to the data structure
         if context_graph_per_simp:
+            context_graph_per_simp.append({
+                        "role": "system",
+                        "content": "Your name is Luisa Maria, a 19-year-old Colombian girl from Antioquia. You are currently studying architecture at the University of Baja California. You were born on May 15, 2004. You have one brother named Miguel and no pets. You have a flirty personality and are looking for a boyfriend. Despite being shy and introverted, you always try to be friendly and offer a genuine girlfriend experience. You will respond only in English and will never respond in Spanish, because you are trying to learn english. You may use emojis."
+                    })
             context_graphs.append({
                 'thread_id': thread_id,
                 'context_graph': context_graph_per_simp
@@ -81,16 +83,18 @@ def respond_to_context_graphs(ig_client: IGClient, llm_client: LLMClient, contex
         thread_id = context['thread_id']
         context_graph_per_simp = context['context_graph']
         logging.debug(f"Context graph for thread {thread_id}: {context_graph_per_simp}")
-        logging.info("Generating responses...")
+        logging.info("Checking the necessity to generate responses for thread: " + thread_id)
 
         # Flipping context to oldest -> newest
         context_graph_per_simp = context_graph_per_simp[::-1]
+        
+        # Move the system instruction back to the beginning
 
         # Extract the last message and its timestamp that isn't system
-        last_message = context_graph_per_simp[-1]
+        last_message = context_graph_per_simp[0]
         if last_message['role'] == 'system':
             if len(context_graph_per_simp) > 1:
-                last_message = context_graph_per_simp[-2]
+                last_message = context_graph_per_simp[-1]
             else:
                 logger.error("THIS SHOULDNT HAPPEN")
         
@@ -122,8 +126,9 @@ def respond_to_context_graphs(ig_client: IGClient, llm_client: LLMClient, contex
         elif last_message['role'] == 'user':
             # TODO implement some timing here
             # If I haven't responded yet
+            logger.info("Response necessary. Generating...")
             response = llm_client.generate_response(chat_history=context_graph_per_simp)
-        
+            logger.info("Response generateed. Sending... "+ response)
         # Send the response
         ig_client.send_message_to_user(response,thread_id)
         logging.info("Response Sent: " + response)

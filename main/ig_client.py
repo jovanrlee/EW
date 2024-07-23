@@ -8,12 +8,14 @@ import logging
 
 logger = logging.getLogger()
 
+#TODO we need to optimize these IG calls, we're making too many to make the threads
 class IGClient:
     def __init__(self, username: str, password: str, session_file: str = "session.json"):
         self.username = username
         self.password = password
         self.session_file = session_file
         self.client = Client()
+        #self.client.set_proxy()
         self.client.delay_range = [1, 3]  # Add random 1-3 second delay between each request
         self.account_id = None
         self._login()
@@ -84,9 +86,6 @@ class IGClient:
 
 
     def send_message_to_user(self, text: str, thread_id: str) -> DirectMessage:
-        logger.info("Sending text" + text)
-        # TODO 
-        # Make it more organic Divide text into multiple sentences if possible
         direct_message: DirectMessage = self.client.direct_send(text, thread_ids=[thread_id])
         return direct_message
 
