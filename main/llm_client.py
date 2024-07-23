@@ -2,9 +2,19 @@ from openai import OpenAI
 import logging
 class LLMClient:
 
+
+
+
+#"meta-llama/llama-3-70b-instruct", 
+# Wanna support NSFW? Give these a try.
+# gryphe/mythomax-l2-13b
+# microsoft/wizardlm-2-8x22b
+# sophosympatheia/midnight-rose-70b
+
+
     def __init__(self, 
                  api_key: str, 
-                 model: str = "meta-llama/llama-3-70b-instruct", 
+                 model: str = "sao10k/l3-70b-euryale-v2.1",
                  base_url: str = "https://api.novita.ai/v3/openai",
                  max_tokens: int = 512,
                  stream: bool = False):
