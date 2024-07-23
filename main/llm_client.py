@@ -14,9 +14,11 @@ class LLMClient:
         self.stream = stream
 
     def generate_response(self, chat_history):
+        chat_history_cleaned = self.remove_timestamps(chat_history)
+
         chat_completion_res = self.client.chat.completions.create(
             model=self.model,
-            messages=chat_history,
+            messages=chat_history_cleaned,
             stream=self.stream,
             max_tokens=self.max_tokens,
             temperature= 0.8,
@@ -29,6 +31,23 @@ class LLMClient:
                 response += chunk.choices[0].delta.content or ""
         else:
             response = chat_completion_res.choices[0].message.content
+            
+            #lowercase the words
+            response = response.lower()
+    
+            # Get rid of the upside down question mark (¿)
+            response = response.replace('¿', '')
+
+            # Get rid of the upside down exclamation mark (¡)
+            response = response.replace('¡', '')
+
+
             logging.info(response)
 
         return response
+    
+    def remove_timestamps(self, chat_history):
+        for message in chat_history:
+            if 'timestamp' in message:
+                del message['timestamp']
+        return chat_history

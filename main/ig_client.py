@@ -40,7 +40,6 @@ class IGClient:
                     login_via_session = True
                     logging.info("Instagram client ready")
                 except Exception as e:
-                    print(f"Couldn't login user using session information: {e}")
                     logger.info(f"Couldn't login user using session information: {e}")
         except Exception as e:
             logging.error(f"Couldn't login user using session information: {e}")
@@ -86,6 +85,8 @@ class IGClient:
 
     def send_message_to_user(self, text: str, thread_id: str) -> DirectMessage:
         logger.info("Sending text" + text)
+        # TODO 
+        # Make it more organic Divide text into multiple sentences if possible
         direct_message: DirectMessage = self.client.direct_send(text, thread_ids=[thread_id])
         return direct_message
 

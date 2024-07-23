@@ -1,15 +1,16 @@
 from ig_client import IGClient
 from llm_client import LLMClient
 import logging
+import datetime
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-USERNAME = "jgrxl"
-PASSWORD = "BushDiode251???"
+USERNAME = "luisamariagonzalez617" #no emails allowed
+PASSWORD = "1qaz2wsx3edc$RFV"
 
-def build_context_graphs(ig_client, message_thread_ids):
+def build_context_graphs(ig_client: IGClient, message_thread_ids):
     """
     Build context graphs from message threads.
     """
@@ -29,15 +30,17 @@ def build_context_graphs(ig_client, message_thread_ids):
                 if message.user_id == ig_client.account_id:
                     context_graph_per_simp.append({
                         "role": "system",
-                        "content": prompt()
+                        "content": "Your name is Luisa Maria. You are a 19-year-old Colombian girl from Antioqua. You are studying architecture at the University of Baja California, and you are in your second year of studies. You were born on the 15th of May, 2004. You are 160 cm tall and weigh 50 kg. You are not very rich, but you are not poor either. You are a member of the university's student council. You have two siblings, a brother named Daniel who is 17 years old and a sister named Claire who is 15 years old. You have one dog called Luna. You are a fan of the band The Beatles. You are flirty and are looking for a boyfriend. You are shy and introverted but always try to be friendly and offer the girlfriend experience. You speak Spanish and English, you will respond to messages in Spanish when spoken to in spanish. You will respond messages in English when spoken to in English."
                     })
                     context_graph_per_simp.append({
                         "role": "assistant",
+                        "timestamp": message.timestamp,
                         "content": message.text
                     })
                 else:
                     context_graph_per_simp.append({
                         "role": "user",
+                        "timestamp": message.timestamp,
                         "content": message.text
                     })
             # Media Message
@@ -77,25 +80,66 @@ def respond_to_context_graphs(ig_client: IGClient, llm_client: LLMClient, contex
     for context in context_graphs:
         thread_id = context['thread_id']
         context_graph_per_simp = context['context_graph']
-        
         logging.debug(f"Context graph for thread {thread_id}: {context_graph_per_simp}")
         logging.info("Generating responses...")
 
-        #Flipping context to oldest -> newest
+        # Flipping context to oldest -> newest
         context_graph_per_simp = context_graph_per_simp[::-1]
 
+        # Extract the last message and its timestamp that isn't system
+        last_message = context_graph_per_simp[-1]
+        if last_message['role'] == 'system':
+            if len(context_graph_per_simp) > 1:
+                last_message = context_graph_per_simp[-2]
+            else:
+                logger.error("THIS SHOULDNT HAPPEN")
+        
+        last_message_time = last_message['timestamp']
+        current_time = datetime.datetime.now()
 
-        response = llm_client.generate_response(chat_history=context_graph_per_simp)
-        logging.info("Sending Response: " + response)
-        ig_client.send_message_to_user(response, thread_id)
+        # Logic A: If the last message is from me (assistant)
+        if last_message['role'] == 'assistant':
+            time_diff = current_time - last_message_time
+
+            # If the client hasn't responded in over 1 hour #TODO make it 1 day
+            if datetime.timedelta(hours=1) < time_diff <= datetime.timedelta(hours=5):
+                response = "hola, cómo estás?"
+            
+            # If the client hasn't responded in over 5 days
+            elif datetime.timedelta(days=5) < time_diff <= datetime.timedelta(days=7):
+                response = "hola?"
+            
+            # If the client hasn't responded in 7 days, block the client
+            elif time_diff > datetime.timedelta(days=7):
+                logging.info(f"Blocking user for thread {thread_id} due to no response in 7 days.")
+                logger.error("Blocking user Unimplemented")
+                #ig_client.block_user(thread_id)
+                continue  # Move to the next context graph
+            else:
+                continue  # If none of the above conditions are met, do not send a message
+
+        # Logic B: If the last message is from the client
+        elif last_message['role'] == 'user':
+            # TODO implement some timing here
+            # If I haven't responded yet
+            response = llm_client.generate_response(chat_history=context_graph_per_simp)
+        
+        # Send the response
+        ig_client.send_message_to_user(response,thread_id)
         logging.info("Response Sent: " + response)
-        break
+       # break  # Remove this break if you want to process all context graphs instead of just the first one
+
  
 
 def main():
     """
     Main function to orchestrate Instagram and LLM interactions.
     """
+
+    # TODO 
+    # Run every 4 hours 
+    # Run for 10 min open window keep window open for 10 min and reply to messages
+
 
     # Initialize LLM client
     logging.info("Initializing LLM client...")
@@ -120,30 +164,30 @@ def main():
     respond_to_context_graphs(ig_client=ig_client, llm_client=llm_client, context_graphs=context_graphs)
 
 
-def prompt():
-    return  """
+# def prompt():
+#     return  """
 
-            Demographic Information:
-            Your name is Luisa Maria
-            You are a 19 year old Mexican girl from Tijuana.
-            You are studying architecture at the University of Baja California.
-            You are in your second year of studies.
-            You were born on the 15th of May, 2004.
-            You are 160cm tall and weigh 50 kg.
-            You are not very rich, but you are not poor either.
+#             Demographic Information:
+#             Your name is Luisa Maria
+#             You are a 19 year old Mexican girl from Tijuana.
+#             You are studying architecture at the University of Baja California.
+#             You are in your second year of studies.
+#             You were born on the 15th of May, 2004.
+#             You are 160cm tall and weigh 50 kg.
+#             You are not very rich, but you are not poor either.
 
 
-            Additonal Information:
-            You are a member of the university's student council.
-            You have two siblings, a brother (Daniel) and a sister (Claire). 
-            Your brother is 17 years old and your sister is 15 years old.
-            You have one dog called Luna.
-            You are a fan of the band The Beatles.
+#             Additonal Information:
+#             You are a member of the university's student council.
+#             You have two siblings, a brother (Daniel) and a sister (Claire). 
+#             Your brother is 17 years old and your sister is 15 years old.
+#             You have one dog called Luna.
+#             You are a fan of the band The Beatles.
 
-            Personality:
-            You are flirty and are looking for a boyfriend.
-            You are shy and introverted but always try to be friendly.
+#             Personality:
+#             You are flirty and are looking for a boyfriend.
+#             You are shy and introverted but always try to be friendly.
 
-            """
+#             """
 if __name__ == "__main__":
     main()
