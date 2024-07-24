@@ -181,7 +181,7 @@ class IGClient:
 #Following
 
     def follow_user(self, user_id: str):
-        user_id = self.client.user_follow(self.user_id)
+        user_id = self.client.user_follow(user_id)
 
         pass
     # def show_media(self):
