@@ -9,7 +9,6 @@ import os
 
 logger = logging.getLogger()
 
-#TODO we need to optimize these IG calls, we're making too many to make the threads
 class IGClient:
     def __init__(self, username: str, password: str, session_file: str = "session.json"):
         self.username = username
@@ -33,7 +32,7 @@ class IGClient:
                         self.client.set_settings(session)
                         self.client.login(self.username, self.password)
                         try:
-                            self.client.get_timeline_feed()
+                            self.client.account_info()
                             logging.info("Logged in using previous session details")
                         except ClientError:
                             logging.info("Session is invalid, need to login via username and password")
@@ -87,19 +86,95 @@ class IGClient:
         
 
 
-    def send_message_to_user(self, text: str, thread_id: str) -> DirectMessage:
-        direct_message: DirectMessage = self.client.direct_send(text, thread_ids=[thread_id])
-        return direct_message
+    def send_message_to_user(self, text: str, user_id: str = None, thread_id: str = None) -> bool:
+        """
+        Returns True if message was sent successfully, False otherwise
+        """
+        if user_id and thread_id:
+            raise Exception("Only one of user_id or thread_id should be provided")
+        
+        if not user_id and not thread_id:
+            raise Exception("Either user_id or thread_id should be provided")
+        
+        if thread_id:
+            logging.info(f"Sendig message {text} to user {thread_id}")
+            self.client.direct_send(text, thread_ids=[thread_id])
+            return True
+        
+        if user_id:
+            logging.info(f"Sendig message {text} to user {user_id}")
+            self.client.direct_send(text, user_ids=[user_id])
+            return True
+        
+        return False
+        
 
 
-    # # TODO fix these
-    # def send_video_to_user(self, user_id: str, video_type: str = None):
-    #     self.client.direct_send_video(path, user_ids=[user_id])
-    # def send_audio_to_user(self):
-    #     self.client.direct_send_file(path, user_ids=[user_id])
-    # def send_photo_to_user(self, path: str, user_id: str, thread_id =None):
-    #     # TODO one or the other user or thread
-    #     self.client.direct_send_photo(path, user_ids=[user_id])
+    def send_video_to_user(self, path, user_id: str,thread_id:str) -> bool:
+        """
+        Returns True if message was sent successfully, False otherwise
+        """
+        if user_id and thread_id:
+            raise Exception("Only one of user_id or thread_id should be provided")
+        
+        if not user_id and not thread_id:
+            raise Exception("Either user_id or thread_id should be provided")
+        
+        if thread_id:
+            self.client.direct_send_video(path, thread_ids=[thread_id])
+            logging.info(f"Sent video to thread {thread_id}")
+            return True
+        
+        if user_id:
+            self.client.direct_send_video(path, user_ids=[user_id])
+            logging.info(f"Sent video to user {user_id}")
+            return True
+        return False
+    
+    def send_audio_to_user(self,path, thread_id:str, user_id: str) -> bool:
+        """
+        Returns True if message was sent successfully, False otherwise
+        """
+        
+        if user_id and thread_id:
+            raise Exception("Only one of user_id or thread_id should be provided")
+        
+        if not user_id and not thread_id:
+            raise Exception("Either user_id or thread_id should be provided")
+        
+        if thread_id:
+            self.client.direct_send_audio(path, thread_ids=[thread_id])
+            logging.info(f"Sent audio to thread {thread_id}")
+            return True
+        
+        if user_id:
+            self.client.direct_send_audio(path, user_ids=[user_id])
+            logging.info(f"Sent audio to user {user_id}")
+            return True
+        return False
+    
+    
+    def send_photo_to_user(self, path: str, user_id: str, thread_id =None) -> bool:
+        """
+        Returns True if message was sent successfully, False otherwise
+        """
+        if user_id and thread_id:
+            raise Exception("Only one of user_id or thread_id should be provided")
+        
+        if not user_id and not thread_id:
+            raise Exception("Either user_id or thread_id should be provided")
+        
+        if thread_id:
+            self.client.direct_send_photo(path, thread_ids=[thread_id])
+            logging.info(f"Sent photo to thread {thread_id}")
+            return True
+
+        if user_id:
+            self.client.direct_send_photo(path, user_ids=[user_id])
+            logging.info(f"Sent photo to user {user_id}")
+            return True
+        return False
+
 
     
     
@@ -129,7 +204,7 @@ class IGClient:
     def follow_user(self, user_id: str):
         user_id = self.client.user_follow(user_id)
 
-        pass
+        
     # def show_media(self):
     #     user_id = self.client.user_id_from_username(self.username)
     #     return self.client.user_medias(user_id, 20)

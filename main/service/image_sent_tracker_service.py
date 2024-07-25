@@ -1,50 +1,44 @@
 import os
-import hashlib
-from flask_sqlalchemy import SQLAlchemy
-from PIL import Image
 from app import db
+from datetime import datetime,date
 
-class SentImage(db.Model):
+
+class SentMedia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)
-    image_hash = db.Column(db.String(64), nullable=False)
+    thread_id = db.Column(db.Integer, nullable=False)
+    media_path = db.Column(db.String(64), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
     def __repr__(self):
-        return f'<SentImage {self.user_id} - {self.image_hash}>'
+        return f'<SentMedia {self.thread_id} - {self.media_path}>'
 
-def __calculate_image_hash(image_path):
-    """Calculate the SHA-256 hash of the image."""
-    with Image.open(image_path) as img:
-        img_bytes = img.tobytes()
-        return hashlib.sha256(img_bytes).hexdigest()
+def mark_media_as_sent(thread_id, media_path):
+    if not os.path.exists(media_path):
+        return {"error": "Media not found"}, 404
 
-def mark_image_as_sent(user_id, image_path):
-    if not os.path.exists(image_path):
-        return {"error": "Image not found"}, 404
-
-    image_hash = __calculate_image_hash(image_path)
-
-    new_sent_image = SentImage(user_id=user_id, image_hash=image_hash)
+    new_sent_image = SentMedia(thread_id=thread_id, media_path=media_path, timestamp=datetime.now())
     db.session.add(new_sent_image)
     db.session.commit()
 
-    return {"message": "Image marked as sent"}, 201
+    return {"message": "Media marked as sent"}, 201
 
-def grab_first_unsent_media(user_id, image_directory) -> str | None:
-    for image_name in os.listdir(image_directory):
-        image_path = os.path.join(image_directory, image_name)
-        if not has_image_been_sent(user_id, image_path):
-            return image_path
+def grab_first_unsent_media(thread_id, media_directory) -> str | None:
+    for media_name in os.listdir(media_directory):
+        media_path = os.path.join(media_directory, media_name)
+        if not has_media_been_sent(thread_id, media_path):
+            return media_path
     return None
 
-def has_image_been_sent(user_id, image_path):
+def has_media_been_sent(thread_id, image_path):
     if not os.path.exists(image_path):
         return {"error": "Image not found"}, 404
-
-    image_hash = __calculate_image_hash(image_path)
-
-    sent_image = SentImage.query.filter_by(user_id=user_id, image_hash=image_hash).first()
-    if sent_image:
+    
+    sent_media = SentMedia.query.filter_by(thread_id=thread_id, media_path=image_path).first()
+    if sent_media:
         return True
-
     return False
+
+def has_been_sent_today_media() -> bool:
+    today = date.today()
+    sent_today = SentMedia.query.filter(db.func.date(SentMedia.timestamp) == today).first()
+    return bool(sent_today)

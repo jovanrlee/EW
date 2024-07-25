@@ -33,6 +33,7 @@ if __name__ == '__main__':
     # Create the database and the tables
     with app.app_context():
         db.create_all()
+        main()
 
     # Set up the scheduler
     scheduler = BackgroundScheduler()

@@ -20,7 +20,7 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.stream = stream
 
-    def generate_response(self, chat_history):
+    def generate_text_response(self, chat_history) -> str:
         chat_history_cleaned = self.remove_timestamps(chat_history)
 
         chat_completion_res = self.client.chat.completions.create(
