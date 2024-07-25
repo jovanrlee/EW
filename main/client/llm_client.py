@@ -21,6 +21,11 @@ class LLMClient:
         self.stream = stream
 
     def generate_text_response(self, chat_history) -> str:
+        # Ensure messages are ordered from oldest to newest
+        #TODO we prob can just revese it not necessary to sort on timestamp
+        chat_history = sorted(chat_history, key=lambda x: x['timestamp'])
+
+        # Clean the timestamps
         chat_history_cleaned = self.remove_timestamps(chat_history)
 
         chat_completion_res = self.client.chat.completions.create(

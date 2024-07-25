@@ -71,7 +71,7 @@ class IGClient:
         direct_thread_by_users: DirectThread = self.client.direct_thread(thread_id, amount=amount)
         return direct_thread_by_users.messages
 
-    def get_all_threads(self, num_threads: int = 5, messages_per_thread:int = 10 ) -> List[DirectThread]:
+    def get_all_threads(self, num_threads: int = 5, messages_per_thread:int = 4 ) -> List[DirectThread]:
         
         # Text Chats
         threads: List[DirectThread] = self.client.direct_threads(amount=num_threads,
@@ -154,7 +154,7 @@ class IGClient:
         return False
     
     
-    def send_photo_to_user(self, path: str, user_id: str, thread_id =None) -> bool:
+    def send_photo_to_user(self, path: str, user_id: str = None, thread_id =None) -> bool:
         """
         Returns True if message was sent successfully, False otherwise
         """
@@ -166,12 +166,12 @@ class IGClient:
         
         if thread_id:
             self.client.direct_send_photo(path, thread_ids=[thread_id])
-            logging.info(f"Sent photo to thread {thread_id}")
+            logging.info(f"Sent photo ${path} to thread {thread_id}")
             return True
 
         if user_id:
             self.client.direct_send_photo(path, user_ids=[user_id])
-            logging.info(f"Sent photo to user {user_id}")
+            logging.info(f"Sent photo ${path} to user {user_id}")
             return True
         return False
 

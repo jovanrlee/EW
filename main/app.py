@@ -1,26 +1,13 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+# app.py
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import atexit
-from main import main #tasks
+from config import create_app
+from tasks import run_main_with_context
 from datetime import datetime, timedelta
 import random
 
-
-app = Flask(__name__)
-
-# Configure the SQLite database, relative to the app instance folder
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Create the SQLAlchemy db instance
-db = SQLAlchemy(app)
-
-
-# @app.route('/')
-# def hello():
-#     return '<h1>Hello, World!</h1>'
+app = create_app()
 
 def get_next_run_time():
     """Calculate the next run time with a random minute offset."""
@@ -30,19 +17,14 @@ def get_next_run_time():
     return next_run_time
 
 if __name__ == '__main__':
-    # Create the database and the tables
-    with app.app_context():
-        db.create_all()
-        main()
-
     # Set up the scheduler
     scheduler = BackgroundScheduler()
     scheduler.start()
     scheduler.add_job(
-        func=main, # Run this every 
-        trigger=IntervalTrigger(hours=1, start_date=get_next_run_time),
+        func=lambda: run_main_with_context(app),  # Pass the app instance to the task function
+        trigger=IntervalTrigger(hours=1, start_date=get_next_run_time()),
         id='my_task',
-        name='Run my_scheduled_task every minute',
+        name='Run my_scheduled_task every hour with a random minute offset',
         replace_existing=True)
 
     # Shut down the scheduler when exiting the app

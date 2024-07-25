@@ -8,6 +8,10 @@ from models.ig import TextMessage, MediaMessage, Sendable
 from typing import Dict, List
 import time
 import random
+from config import create_app, db  # Adjust import to reference your Flask app and database instance
+from service.image_sent_tracker_service import grab_first_unsent_media, mark_media_as_sent, has_media_been_sent
+import os
+
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
@@ -16,7 +20,7 @@ PASSWORD = "BushDiode251???"
 
 USERNAME = "luisamariagonzalez617"
 PASSWORD = "1qaz2wsx3edc$RFV"
-
+PATH = "/Users/jovanlee/Documents/ew/main/media/model/julianna"
 def context_to_llm_context(context: Dict[str, 'ThreadContext']) -> List[LLMContext]:
     messages_as_llm_context = []
     
@@ -55,7 +59,7 @@ def context_to_llm_context(context: Dict[str, 'ThreadContext']) -> List[LLMConte
             context_graph_per_simp.append(LLMMessage(
                 role="system",
                 timestamp="",
-                content="Your name is Luisa Maria, a 19-year-old Colombian girl from Antioquia. You are currently studying architecture at the University of Baja California. You were born on May 15, 2004. You have one brother named Miguel and no pets. You have a flirty personality and are looking for a boyfriend. You don't know much about the United States. Despite being shy and introverted, you always try to be friendly and offer a genuine girlfriend experience. You will respond only in English and will never respond in Spanish, because you are trying to learn English. You may use emojis. Please avoid generating any content that includes actions or emotions enclosed in asterisks (e.g., giggles, blushes). You are poor and would love to accept money and gifts. Do not send any code or anything related to llm. Do not send \\commands. Respond only with clear, straightforward text without any role-playing elements."
+                content="Your name is Luisa Maria, a 19-year-old Colombian girl from Antioquia. You are currently studying architecture at the University of Baja California. You were born on May 15, 2004. You have one brother named Miguel and no pets. You have a flirty personality and are looking for a boyfriend. You don't know much about the United States. Despite being shy and introverted, you always try to be friendly and offer a genuine girlfriend experience. You will respond only in English and will never respond in Spanish, because you are trying to learn English. You may use emojis. Please avoid generating any content that includes actions or emotions enclosed in asterisks (e.g., giggles, blushes). You are poor and would love to accept money and gifts. Do not send any code or anything related to llm. Do not send \\commands. Respond only with clear, straightforward text without any role-playing elements. Never mention you are a language model."
             ))
             context_graph_per_simp = context_graph_per_simp[::-1]
             messages_as_llm_context.append(LLMContext(
@@ -65,19 +69,15 @@ def context_to_llm_context(context: Dict[str, 'ThreadContext']) -> List[LLMConte
     
     return messages_as_llm_context
 
-def __generate_media_response(thread_id:str, sendables: List[Sendable], media_type:str = None, media_genre:str = None) -> MediaMessage:
-    logging.info("Media has been sent today... Sending selfie")
+def __generate_media_response(thread_id:str, media_type:str = None, media_genre:str = None) -> MediaMessage:    
     
+    #TODO add back in logic
     if not media_type:
-        media_type = ["photo", "video", "audio"]
-        media_type = random.choices(media_type, weights=[80, 15, 5], k=1)[0]
-
+        media_type = "photo"
     if not media_genre:
-        confidence = None
         media_genre = "selfie"
 
-    from service.image_sent_tracker_service import grab_first_unsent_media
-    media_path = grab_first_unsent_media(thread_id=thread_id, media_directory=f".media/julianna/{media_type}/{media_genre}")
+    media_path = grab_first_unsent_media(thread_id=thread_id, media_directory=f"{PATH}/{media_type}/{media_genre}")
     
     return MediaMessage(
         thread_id=thread_id,
@@ -117,12 +117,8 @@ def generate_responses(llm_client: LLMClient, context_graphs: List[LLMContext]) 
             else:
                 logging.error("THIS SHOULDN'T HAPPEN")
 
-        last_message_time = datetime.datetime.fromisoformat(last_message.timestamp)
-        current_time = datetime.datetime.now()
-
         response = None
         if last_message.role == 'assistant':
-            time_diff = current_time - last_message_time
             checkup_responses = ["hola, cómo estás?", "hola?", "holi?", "hello", "todo está bien?", "todo bien?","como estas"]
 
             # TODO double text logic
@@ -133,6 +129,22 @@ def generate_responses(llm_client: LLMClient, context_graphs: List[LLMContext]) 
             #TODO block user logic if last n messages all assistant
             # logging.info(f"Blocking user for thread {thread_id} due to no response in 7 days.")
             # continue
+        
+        if last_message.role == 'user':
+            from service.image_sent_tracker_service import has_been_sent_today_media
+            logging.info("Response necessary. Generating...")
+            try:
+                response = llm_client.generate_text_response(chat_history=[msg.__dict__ for msg in context_graph_per_simp])
+                logging.info("Response generated. Sending... " + response)
+                sendables.append(TextMessage(thread_id=thread_id, content=response))
+                
+                if not has_been_sent_today_media(thread_id):
+                    logging.info("Media response necessary. Generating...")
+                    media = __generate_media_response(thread_id)
+                    sendables.append(media)
+            except Exception as e:
+                logging.error(f"Failed to generate response for thread {thread_id}: {e}")
+
         
     return sendables
 
@@ -168,26 +180,44 @@ def create_context(threads: List[DirectThread]) -> Dict[str, ThreadContext]:
 
     return context
 
-def send_messages(ig_client:IGClient, sendables:List[Sendable]):
-    from service.image_sent_tracker_service import grab_first_unsent_media, mark_media_as_sent
-
+def send_messages(ig_client: IGClient, sendables: List[Sendable]):
     for sendable in sendables:
         if isinstance(sendable, TextMessage):
             ig_client.send_message_to_user(text=sendable.content, thread_id=sendable.thread_id)
         elif isinstance(sendable, MediaMessage):
+            media_directory = os.path.dirname(sendable.media_path)  # Get directory from media path
+            logging.info(f"Media type: {sendable.media_type}, Media directory: {media_directory}")
+
             if sendable.media_type == "photo":
-                available_photo = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=".media/julianna/photo/")
-                ig_client.send_photo_to_user(path=available_photo, thread_id=sendable.thread_id)
-            elif sendable.media_type == "video":
-                available_video_path = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=".media/julianna/video/")
-                sent = ig_client.send_video_to_user(path=available_video_path, thread_id=sendable.thread_id)
-                if sent:
+                available_photo = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=media_directory)
+                if available_photo and not has_media_been_sent(sendable.thread_id, available_photo):
+                    ig_client.send_photo_to_user(path=available_photo, thread_id=sendable.thread_id)
+                    logging.info(f"Sent photo {available_photo} to thread {sendable.thread_id}")
                     mark_media_as_sent(thread_id=sendable.thread_id, media_path=available_photo)
+                else:
+                    logging.warning(f"No unsent photo found for thread {sendable.thread_id} in {media_directory}")
+
+            elif sendable.media_type == "video":
+                available_video_path = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=media_directory)
+                if available_video_path and not has_media_been_sent(sendable.thread_id, available_video_path):
+                    sent = ig_client.send_video_to_user(path=available_video_path, thread_id=sendable.thread_id)
+                    if sent:
+                        logging.info(f"Sent video {available_video_path} to thread {sendable.thread_id}")
+                        mark_media_as_sent(thread_id=sendable.thread_id, media_path=available_video_path)
+                else:
+                    logging.warning(f"No unsent video found for thread {sendable.thread_id} in {media_directory}")
+
             elif sendable.media_type == "audio":
-                available_audio = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=".media/julianna/audio/")
-                ig_client.send_audio_to_user(path=available_audio, thread_id=sendable.thread_id)
+                available_audio = grab_first_unsent_media(thread_id=sendable.thread_id, media_directory=media_directory)
+                if available_audio and not has_media_been_sent(sendable.thread_id, available_audio):
+                    ig_client.send_audio_to_user(path=available_audio, thread_id=sendable.thread_id)
+                    logging.info(f"Sent audio {available_audio} to thread {sendable.thread_id}")
+                    mark_media_as_sent(thread_id=sendable.thread_id, media_path=available_audio)
+                else:
+                    logging.warning(f"No unsent audio found for thread {sendable.thread_id} in {media_directory}")
         else:
             logging.warning(f"Unsupported media type: {sendable.media_type}")
+
         time.sleep(5 + random.uniform(1, 3))
 
 def main():
@@ -242,4 +272,8 @@ def main():
     logging.info("Messages sent")
     
 if __name__ == "__main__":
-    main()
+    app = create_app()  # Adjusted to use create_app
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        main()
