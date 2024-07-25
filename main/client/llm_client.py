@@ -2,9 +2,6 @@ from openai import OpenAI
 import logging
 class LLMClient:
 
-
-
-
 #"meta-llama/llama-3-70b-instruct", 
 # Wanna support NSFW? Give these a try.
 # gryphe/mythomax-l2-13b
@@ -31,7 +28,7 @@ class LLMClient:
             messages=chat_history_cleaned,
             stream=self.stream,
             max_tokens=self.max_tokens,
-            temperature= 0.8,
+            temperature=0.8,
         )
 
         response = ""
@@ -41,21 +38,18 @@ class LLMClient:
                 response += chunk.choices[0].delta.content or ""
         else:
             response = chat_completion_res.choices[0].message.content
-            
-            #lowercase the words
+
+            # Lowercase the words
             response = response.lower()
-    
+
             # Get rid of the upside down question mark (¿)
             response = response.replace('¿', '')
 
             # Get rid of the upside down exclamation mark (¡)
             response = response.replace('¡', '')
 
-
         return response
-    
+
     def remove_timestamps(self, chat_history):
-        for message in chat_history:
-            if 'timestamp' in message:
-                del message['timestamp']
+        # Implement the logic to remove timestamps if necessary
         return chat_history
