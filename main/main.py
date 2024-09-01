@@ -15,12 +15,12 @@ import os
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
-USERNAME = "jgrxl"
-PASSWORD = "BushDiode251???"
+# USERNAME = "jgrxl"
+# PASSWORD = "BushDiode251???"
 
-USERNAME = "luisamariagonzalez617"
-PASSWORD = "1qaz2wsx3edc$RFV"
-PATH = "/Users/jovanlee/Documents/ew/main/media/model/julianna"
+# USERNAME = "luisamariagonzalez617"
+# PASSWORD = "1qaz2wsx3edc$RFV"
+# PATH = "/Users/jovanlee/Documents/ew/main/media/model/julianna"
 def context_to_llm_context(context: Dict[str, 'ThreadContext']) -> List[LLMContext]:
     messages_as_llm_context = []
     
@@ -59,7 +59,7 @@ def context_to_llm_context(context: Dict[str, 'ThreadContext']) -> List[LLMConte
             context_graph_per_simp.append(LLMMessage(
                 role="system",
                 timestamp="",
-                content="Your name is Luisa Maria, a 19-year-old Colombian girl from Antioquia. You are currently studying architecture at the University of Baja California. You were born on May 15, 2004. You have one brother named Miguel and no pets. You have a flirty personality and are looking for a boyfriend. You don't know much about the United States. Despite being shy and introverted, you always try to be friendly and offer a genuine girlfriend experience. You will respond only in English and will never respond in Spanish, because you are trying to learn English. You may use emojis. Please avoid generating any content that includes actions or emotions enclosed in asterisks (e.g., giggles, blushes). You are poor and would love to accept money and gifts. Do not send any code or anything related to llm. Do not send \\commands. Respond only with clear, straightforward text without any role-playing elements. Never mention you are a language model."
+                content="Your name is Luisa Maria, a 19-year-old Colombian girl from Antioquia. You are a flight attendant. You were born on May 15, 2004. You have one brother named Miguel and no pets. You have a flirty personality and are looking for a boyfriend. You don't know much about the United States. Despite being shy and introverted, you always try to be friendly and offer a genuine girlfriend experience. You will respond only in English and will never respond in Spanish, because you are trying to learn English. You may use emojis. Please avoid generating any content that includes actions or emotions enclosed in asterisks (e.g., giggles, blushes). You are poor and would love to accept money and gifts. Do not send any code or anything related to llm. Do not send \\commands. Respond only with clear, straightforward text without any role-playing elements. Never mention you are a language model."
             ))
             context_graph_per_simp = context_graph_per_simp[::-1]
             messages_as_llm_context.append(LLMContext(
@@ -126,7 +126,7 @@ def generate_responses(llm_client: LLMClient, context_graphs: List[LLMContext]) 
             response = random.choice(checkup_responses)
             sendables.append(TextMessage(thread_id=thread_id, content=response))
 
-            #TODO block user logic if last n messages all assistant
+            # TODO block user logic if last n messages all assistant
             # logging.info(f"Blocking user for thread {thread_id} due to no response in 7 days.")
             # continue
         
@@ -220,13 +220,16 @@ def send_messages(ig_client: IGClient, sendables: List[Sendable]):
 
         time.sleep(5 + random.uniform(1, 3))
 
-def main():
+def main(USERNAME:str,PASSWORD:str,):
+
     logging.info("Initializing LLM client...")
-    llm_client = LLMClient(api_key="92cac53e-9ad8-4fae-ace5-de7f22855c0f")
+    llm_client = LLMClient(api_key="099b1891-9424-4e10-bf6f-85e381b37214")
     logging.info("Finished initializing LLM client...")
 
+    #TODO Retrieve User/Password from DB and send to IG
+
     logging.info("Initializing IG Client")
-    ig_client = IGClient(username=USERNAME, password=PASSWORD)
+    ig_client = IGClient(username=USERNAME, password=PASSWORD,session_file="TODO")
     logging.info("Finished initializing IG Client")
 
 

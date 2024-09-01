@@ -1,7 +1,7 @@
 # ig_client.py
 
 from instagrapi import Client
-from instagrapi.types import DirectThread, Note, DirectMessage,Story
+from instagrapi.types import DirectThread, Note, DirectMessage,Story,UserShort
 from instagrapi.exceptions import LoginRequired, ClientError 
 from typing import List, Dict
 import logging
@@ -199,10 +199,21 @@ class IGClient:
     
 
 
-#Following
+    #Following
+    def get_users_followers(self, user_id: str) -> Dict[str,UserShort]:
+        return self.client.user_followers(user_id=user_id, amount=20)
+
+    def get_users_following(self, user_id: str) -> Dict[str,UserShort]:
+        return self.client.user_following(user_id=user_id, amount=20)
 
     def follow_user(self, user_id: str):
         user_id = self.client.user_follow(user_id)
+
+    def get_user_id_from_username(self, username: str) -> str:
+        return self.client.user_id_from_username(username)
+    
+    def add_to_close_friends(self, user_id: str) -> bool:
+        return self.client.close_friend_add(user_id)
 
         
     # def show_media(self):

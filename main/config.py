@@ -16,7 +16,6 @@ def create_app():
 
     # Import the models here to register them with SQLAlchemy
     with app.app_context():
-        from service.image_sent_tracker_service import SentMedia  # Import the model
         db.create_all()
 
     return app
