@@ -1,3 +1,48 @@
-#Main.py - Auto respond
+# TODO 
 
-# Find.py follow bot
+Create LLM in DAG related way
+Langgraph (with memory RAG)
+Auto follow (look for clients)
+
+
+# Completed
+Auto respond using LLM Model
+
+
+
+Flow Chart for Selling Content on Instagram using LLMs
+Start
+
+Friendly LLM
+Purpose: Initiate conversation with a warm and approachable tone.
+Example: "Hey there! Hope you're having a great day! 😊"
+
+
+
+
+Flirt LLM:
+Purpose: Create interest for the content
+Example: XXXX
+
+
+Determine Hotness Level
+Purpose: Assess the potential buyer's level of interest and readiness to purchase.
+Example: Analyzing responses to previous messages to categorize the buyer as highly interested, moderately interested, or low interest.  Return to more flirting or friendly depending on interest
+
+
+Interest LLM
+Purpose: Gauge the user's interest in specific types of content.
+Example: "I noticed you liked my recent post on [topic]. Do you enjoy [related content]?"
+
+
+Call To Action
+Purpose: Encourage the user to take a specific action, such as purchasing content or subscribing.
+Example: "I'm offering some exclusive content this week. Would you like to check it out?"
+Content Pusher
+
+Purpose: Deliver the content or provide access once the purchase is made.
+Example: "Great choice! Here’s your exclusive content. Let me know what you think!"
+Flow Chart Visualization
+Start → Friendly LLM → Interest LLM
+If Interest Level Determined as High → Call To Action → Content Pusher
+If Interest Level Determined as Moderate or Low → Additional prompts from Interest LLM to further gauge interest or adjust the offer.
