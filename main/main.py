@@ -15,9 +15,6 @@ import os
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
-# USERNAME = "jgrxl"
-# PASSWORD = "BushDiode251???"
-
 # USERNAME = "luisamariagonzalez617"
 # PASSWORD = "1qaz2wsx3edc$RFV"
 # PATH = "/Users/jovanlee/Documents/ew/main/media/model/julianna"
